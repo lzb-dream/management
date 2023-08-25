@@ -5,7 +5,24 @@
 <script setup>
 import {onMounted,onBeforeUnmount} from 'vue'
 import router from '@/router'
+import { useStore } from 'vuex'
+import {getToken} from '@/js/components'
 var Timer
+
+const mystore = useStore()
+// 初始化器材数据
+if(getToken()){
+	mystore.dispatch('equipment/getData')
+}
+
+
+// 用户个人信息拉去
+const userInfo = JSON.parse(window.localStorage.getItem('userInfo'))
+mystore.commit('change', {'key': 'userInfo', 'value': userInfo})
+
+
+
+// 判断token是否过期
 onMounted(()=>{
 	clearInterval(Timer)
 	judegPath()
@@ -14,9 +31,14 @@ onMounted(()=>{
 		console.log('验证')
 	},60000)
 })
+
+// 关闭网站清空计时器
 onBeforeUnmount(()=>{
 	clearInterval(Timer)
 })
+
+// token验证
+
 function judegPath(vierf){
 	const cookiesList = document.cookie.split(' ')
 	const cookiesDict = {}
@@ -28,15 +50,12 @@ function judegPath(vierf){
 		if(vierf){
 			return true
 		}
-		router.push('/ManageMent')
+		router.replace('/ManageMent')
 	}else{
-		if(vierf){
-			return false
-		}
-		router.push('/UserLogin')
+		router.replace('/UserLogin')
 	}
 }
-	
+
 
 	
 // import {computed} from 'vue';

@@ -14,18 +14,24 @@ import {ElButton,
 		ElTable,
 		ElTableColumn,
 		ElDialog,
-		ElPopover
+		ElPopover,
+		ElSelect,
+		ElOption
 		
 		} from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 const app = createApp(App)
+
+// element的icon使用
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
 app
+	.component('el-option',ElOption)
+	.component('el-select',ElSelect)
 	.component('el-popover',ElPopover)
 	.component('el-dialog',ElDialog)
 	.component('el-table',ElTable)

@@ -63,6 +63,9 @@ import {ref, watch} from 'vue';
 import {fetchData} from '@/js/components'
 import router from '@/router'
 
+import { useStore } from 'vuex'
+const mystore = useStore()
+
 // 弹出信息提示框
 import { ElMessageBox } from 'element-plus'
 const openMessageBox = (title,message)=>{
@@ -182,16 +185,28 @@ const login = async()=>{
 	}
 	try{
 		const data = await fetchData(path,options)
-		console.log(data);
 		if(data.status==200){
-			console.log(router);
 			const date = new Date(data.expiration_timep);
+			if(Number(data.userInfo.status)==0){
+				openMessageBox('登录状态提示', '你的身份还在审核中，请耐心等待。')
+				return false
+			}
 			let expires = date.toUTCString();
-			console.log(expires); 
 			// 不能加空格
 			document.cookie = `token=${data.token};expires=${expires}`;
-			router.push('/ManageMent')
-
+			const userInfo = {
+				'accountNumber': accountNumber.value,
+				'addTime': data.userInfo.addTime,
+				'username': data.userInfo.username,
+				'status': data.userInfo.status,
+			}
+			mystore.commit('change',{'key': 'userInfo', 'value': userInfo})
+			// 备份用户数据信息
+			window.localStorage.setItem('userInfo', JSON.stringify(userInfo))
+			// 请求该用户状态的相应数据
+			mystore.dispatch('equipment/getData')
+			// 根据权限状态的不同，给用户请求相应的数据
+			router.replace('/ManageMent')
 		}else{
 			openMessageBox('登录状态提示',data.message)
 		}

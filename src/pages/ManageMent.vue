@@ -1,33 +1,30 @@
 <template>
 	<div class="title"><span>FTF后台管理系统</span></div>
+	
 	<div class="topheard">
 		<el-radio-group v-model="isCollapse" style="margin-bottom: 20px">
-			<el-radio-button :label="false">expand</el-radio-button>
-			<el-radio-button :label="true">collapse</el-radio-button>
+			<el-radio-button :label="false">展开</el-radio-button>
+			<el-radio-button :label="true">关闭</el-radio-button>
 		</el-radio-group>
-		
 		<el-switch v-model="value1" @click="changeColor()"/>
 	</div>
 
 	<div class="contentview">
-		
 		<div class="sidebar">
 			<el-menu class="el-menu-vertical-demo" 
 			:collapse="isCollapse" 
 			@open="handleOpen"
 			@close="handleClose"
-			default-active="1"
+			:default-active="defaultActive"
 			>
-				<el-menu-item index="1" @click="switchView(1)">
+				<el-menu-item v-for="item in $store.state.siderList" 
+				:index="item.index" 
+				@click="switchView(item.index)"
+				:key="item.index">
 					<el-icon><Notebook /></el-icon>
-					<template #title>SuperAdmin</template>
+					<template #title>{{item.siderName}}</template>
 				</el-menu-item>
-				<el-menu-item index="2" @click="switchView(2)">
-					<el-icon>
-						<setting />
-					</el-icon>
-					<template #title>出入库清单</template>
-				</el-menu-item>
+				
 			</el-menu>
 		</div>
 	
@@ -40,10 +37,15 @@
 <script setup>
 import {ref,onMounted} from 'vue'
 import router from '@/router'
+import { useStore } from 'vuex'
 
+const mystore = useStore()
+// 侧边栏开关
 let value1 = ref(false)
 let backgroundColor = ref('#141414')
 let color = ref('#E5EAF3')
+
+// 改变全局颜色
 const changeColor = ()=>{
 	console.log('调用');
 	if(backgroundColor.value=='#141414'){
@@ -57,12 +59,27 @@ const changeColor = ()=>{
 	htmltag.style.backgroundColor = backgroundColor.value
 	htmltag.style.color = color.value
 }
+
+
 onMounted(()=>{
+	// 初始化全局颜色
 	let htmltag = document.querySelector('html')
 	htmltag.style.backgroundColor = backgroundColor.value
 	htmltag.style.color = color.value
+	// 初始化侧边栏选项
+	let status = mystore.state.userInfo.status
+	if(Number(status)==3){
+		const value = [
+			{siderName: '个人中心', index: '0', component: '/UserContent'},
+			{siderName: '器材管理', index: '1', component: '/FTFContent'},
+			{siderName: '财务管理', index: '2', component: '/FinancialManagement'},
+		]
+		mystore.commit('change',{'key': 'siderList', 'value': value})
+	}
 })
-const isCollapse = ref(true)
+
+const isCollapse = ref(false)
+
 const handleOpen = (key, keyPath) => {
   console.log(key, keyPath)
 }
@@ -72,14 +89,20 @@ const handleClose = (key, keyPath) => {
 
 // 点击切换主界面内容
 const switchView = (num)=>{
-	switch (num) {
-		case 1:
-			router.push('UserContent');
-			break;
-		case 2:
-			router.push('FTFContent');
-			break;
-	}
+	mystore.state.siderList.forEach((value)=>{
+		if(Number(num)==value.index){
+			router.push(value.component);
+			window.sessionStorage.setItem('childPath', JSON.stringify({path: value.component, defaultActive: num}))
+		}
+	})
+}
+// 默认侧边栏active显示
+let defaultActive = ref('0')
+// 刷新页面时不会忘记当前页面
+if(sessionStorage.getItem('childPath')){
+	const sessionData = JSON.parse(sessionStorage.getItem('childPath')) 
+	router.replace(sessionData.path)
+	defaultActive.value = sessionData.defaultActive
 }
 
 </script>
@@ -128,7 +151,7 @@ const switchView = (num)=>{
 	
 	// 控制侧边栏展开宽度大小
 	.el-menu-vertical-demo:not(.el-menu--collapse) {
-		width: 200px;
+		width: 150px;
 		min-height: 500px;
 	}
 	
